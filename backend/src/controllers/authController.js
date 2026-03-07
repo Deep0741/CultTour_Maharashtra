@@ -77,7 +77,7 @@ exports.login = async (req, res, next) => {
         message: 'Invalid credentials'
       });
     }
-    
+
 // Check role matches selected role
 if (role && user.role !== role) {
   return res.status(401).json({
@@ -206,4 +206,71 @@ exports.logout = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+const crypto = require("crypto");
+const User = require("../models/User");
+
+exports.forgotPassword = async (req, res) => {
+
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found"
+    });
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  user.resetPasswordToken = resetToken;
+
+  user.resetPasswordExpires = Date.now() + 3600000;
+
+  await user.save();
+
+  const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
+
+  console.log("Reset Link:", resetLink);
+
+  res.json({
+    success: true,
+    message: "Reset link generated (check backend console)",
+    resetLink
+  });
+
+};
+
+exports.resetPassword = async (req, res) => {
+
+  const { token } = req.params;
+  const { password } = req.body;
+
+  const user = await User.findOne({
+    resetPasswordToken: token,
+    resetPasswordExpires: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid or expired token"
+    });
+  }
+
+  user.password = password;
+
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+
+  await user.save();
+
+  res.json({
+    success: true,
+    message: "Password updated successfully"
+  });
+
 };

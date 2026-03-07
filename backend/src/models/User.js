@@ -44,9 +44,17 @@ const userSchema = new mongoose.Schema({
     default: false
   },
   refreshToken: {
-    type: String,
-    select: false
-  }
+  type: String,
+  select: false
+},
+
+resetPasswordToken: {
+  type: String
+},
+
+resetPasswordExpires: {
+  type: Date
+}
 }, {
   timestamps: true
 });

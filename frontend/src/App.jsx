@@ -17,16 +17,26 @@ import Profile from "./pages/Profile";
 
 
 // Tourist pages
-import TouristDashboard from './pages/tourist/Dashboard';
+import TouristDashboard from './pages/tourist/TouristDashboard';
 
 // Guide pages
-import GuideDashboard from './pages/guide/Dashboard';
+import GuideDashboard from './pages/guide/GuideDashboard';
+import GuideLicense from "./pages/guide/GuideLicense";
 
 // Admin pages
-import AdminDashboard from './pages/admin/ashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 //DestinationDetains
 import DestinationDetails from "./pages/public/DestinationDetails";
+
+//Booking Confirmation 
+import BookingConfirmation from "./pages/booking/BookingConfirmation";
+
+// Forget Password
+import ForgotPassword from "./pages/auth/ForgotPassword";
+
+// Reset Password
+import ResetPassword from "./pages/auth/ResetPassword";
 
 function App() {
   return (
@@ -40,10 +50,13 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
               <Route path="/destinations" element={<Destinations />} />
               <Route path="/cuisines" element={<Cuisines />} />
               <Route path="/guides" element={<Guides />} />
               <Route path="/destinations/:id" element={<DestinationDetails />} />
+              <Route path="/booking/confirmation" element={<BookingConfirmation />} />
             
 
               {/* Tourist Routes */}
@@ -65,6 +78,14 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/guide/license"
+                element={
+                  <ProtectedRoute allowedRoles={['guide']}>
+                    <GuideLicense />
+                  </ProtectedRoute>
+                }
+              />  
 
               {/* Admin Routes */}
               <Route

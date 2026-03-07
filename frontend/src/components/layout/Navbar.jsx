@@ -16,18 +16,23 @@ const Navbar = () => {
 
  const getDashboardLink = () => {
 
- if(user?.role === "admin")
-   return "/admin/dashboard"
+  if (!user) return "/login";
 
- if(user?.role === "guide")
-   return "/guide/dashboard"
+  switch (user.role) {
+    case "admin":
+      return "/admin/dashboard";
 
- if(user?.role === "tourist")
-   return "/tourist/dashboard"
+    case "guide":
+      return "/guide/dashboard";
 
- return "/"
+    case "tourist":
+      return "/tourist/dashboard";
 
-}
+    default:
+      return "/";
+  }
+
+};
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
@@ -58,59 +63,68 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            {user ? (
-              <div className="relative">
-                <button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition"
-                >
-                  <img
-                    src={user?.image || 'https://via.placeholder.com/40'}
-                    alt={user?.name}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                  <span className="font-medium">{user?.name}</span>
-                </button>
+              {user ? (
 
-                {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
-                    <Link
-                      to={getDashboardLink()}
-                      className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      <MdDashboard />
-                      <span>Dashboard</span>
-                    </Link>
-                    <Link
-                      to="/profile"
-                      className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      <FaUser />
-                      <span>Profile</span>
-                    </Link>
+                  <div className="relative">
+
                     <button
-                      onClick={handleLogout}
-                      className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-gray-100 w-full text-left"
+                      onClick={() => setShowDropdown(!showDropdown)}
+                      className="flex items-center space-x-2 text-gray-700 hover:text-primary-600"
                     >
-                      <FaSignOutAlt />
-                      <span>Logout</span>
+
+                      <img
+                        src={user?.image || "https://i.pravatar.cc/40"}
+                        className="w-8 h-8 rounded-full"
+                      />
+
+                      <span>{user?.name}</span>
+
                     </button>
+
+                    {showDropdown && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
+
+                        <Link
+                          to="/profile"
+                          className="flex items-center px-4 py-2 hover:bg-gray-100"
+                        >
+                          Profile
+                        </Link>
+
+                        <Link
+                          to={getDashboardLink()}
+                          className="flex items-center px-4 py-2 hover:bg-gray-100"
+                        >
+                          Dashboard
+                        </Link>
+
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100 w-full text-left"
+                        >
+                          Logout
+                        </button>
+
+                      </div>
+                    )}
+
                   </div>
+
+                ) : (
+
+                  <div className="flex items-center space-x-4">
+
+                    <Link to="/login" className="text-gray-700 hover:text-primary-600 font-medium">
+                      Login
+                    </Link>
+
+                    <Link to="/register" className="btn-primary">
+                      Register
+                    </Link>
+
+                  </div>
+
                 )}
-              </div>
-            ) : (
-              <div className="flex items-center space-x-4">
-                <Link to="/login" className="text-gray-700 hover:text-primary-600 font-medium">
-                  Login
-                </Link>
-                <Link to="/register" className="btn-primary">
-                  Register
-                </Link>
-                <Link to="/profile">Profile</Link>
-              </div>
-            )}
           </div>
         </div>
       </div>
