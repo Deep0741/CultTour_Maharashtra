@@ -4,25 +4,30 @@ export default function ForgotPassword() {
 
 const [email,setEmail] = useState("");
 
-const handleSubmit = async (e)=>{
+const handleSubmit = async (e) => {
 
-e.preventDefault();
+  e.preventDefault();
 
-const res = await fetch("http://localhost:5000/api/v1/auth/forgot-password",{
+  const res = await fetch("http://localhost:5000/api/v1/auth/forgot-password", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ email })
+  });
 
-method:"POST",
+  const data = await res.json();
 
-headers:{
-"Content-Type":"application/json"
-},
+  if (data.success) {
 
-body:JSON.stringify({email})
+    // automatically redirect user to reset password page
+    window.location.href = data.resetLink;
 
-});
+  } else {
 
-const data = await res.json();
+    alert(data.message);
 
-alert(data.message);
+  }
 
 };
 

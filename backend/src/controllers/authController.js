@@ -209,7 +209,7 @@ exports.logout = async (req, res, next) => {
   }
 };
 
-
+//Forgot Password
 
 exports.forgotPassword = async (req, res) => {
 
@@ -238,11 +238,13 @@ exports.forgotPassword = async (req, res) => {
 
   res.json({
     success: true,
-    message: "Reset link generated (check backend console)",
+    message: "Reset link generated",
     resetLink
   });
 
 };
+
+// Reset Password
 
 exports.resetPassword = async (req, res) => {
 
