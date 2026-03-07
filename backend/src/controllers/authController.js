@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Guide = require('../models/Guide');
+const crypto = require("crypto");
 
 // Generate JWT Token
 const generateToken = (user) => {
@@ -208,8 +209,7 @@ exports.logout = async (req, res, next) => {
   }
 };
 
-const crypto = require("crypto");
-const User = require("../models/User");
+
 
 exports.forgotPassword = async (req, res) => {
 
