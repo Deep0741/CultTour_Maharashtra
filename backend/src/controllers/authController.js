@@ -24,21 +24,18 @@ const generateRefreshToken = (id) => {
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
+    console.log(req.body);
     const { name, email, password, role, phone } = req.body;
 
-let finalRole = "tourist";
+    const finalRole = role || 'tourist';
 
-if (role === "guide") {
-  finalRole = "guide";
-}
-
-const user = await User.create({
-  name,
-  email,
-  password,
-  role: finalRole,
-  phone
-});
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: finalRole,
+      phone
+    });
 
     // Generate tokens
     const token = generateToken(user);

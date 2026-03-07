@@ -22,13 +22,24 @@ e.preventDefault();
 
 const result = await login(formData);
 
-if(result.success){
+if (result.success) {
 
 toast.success("Login successful");
 
-navigate("/profile");
+const role = localStorage.getItem("userRole");
 
-}else{
+if (role === "admin") {
+navigate("/admin/dashboard");
+}
+else if (role === "guide") {
+navigate("/guide/dashboard");
+}
+else {
+navigate("/tourist/dashboard");
+}
+
+}
+else {
 toast.error(result.message || "Login failed");
 }
 

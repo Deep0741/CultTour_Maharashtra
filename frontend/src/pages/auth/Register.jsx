@@ -85,27 +85,48 @@ Register as
 
 <div className="flex gap-4">
 
-<label className="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg cursor-pointer hover:border-orange-500">
+<label className="flex items-center gap-2 border rounded-lg px-4 py-2 cursor-pointer">
+
 <input
 type="radio"
 name="role"
 value="tourist"
-defaultChecked
+checked={formData.role === "tourist"}
 onChange={handleChange}
-className="accent-orange-600"
 />
+
 Tourist
+
 </label>
 
-<label className="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg cursor-pointer hover:border-orange-500">
+
+<label className="flex items-center gap-2 border rounded-lg px-4 py-2 cursor-pointer">
+
 <input
 type="radio"
 name="role"
 value="guide"
+checked={formData.role === "guide"}
 onChange={handleChange}
-className="accent-orange-600"
 />
+
 Guide
+
+</label>
+
+
+<label className="flex items-center gap-2 border rounded-lg px-4 py-2 cursor-pointer">
+
+<input
+type="radio"
+name="role"
+value="admin"
+checked={formData.role === "admin"}
+onChange={handleChange}
+/>
+
+Admin
+
 </label>
 
 </div>
