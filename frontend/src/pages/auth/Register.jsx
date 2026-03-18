@@ -25,8 +25,28 @@ e.preventDefault();
 const result = await register(formData);
 
 if(result.success){
+
 toast.success("Registration successful");
+
+/* ✅ STORE USER ROLE */
+localStorage.setItem("userRole", formData.role);
+
+/* ✅ GUIDE IS NOT VERIFIED YET */
+if(formData.role === "guide"){
+localStorage.setItem("isVerified", "false");
+}
+
+/* Redirect based on role */
+if(formData.role === "guide"){
 navigate("/login");
+}
+else if(formData.role === "admin"){
+navigate("/admin/dashboard");
+}
+else{
+navigate("/tourist/dashboard");
+}
+
 }else{
 toast.error(result.message || "Registration failed");
 }

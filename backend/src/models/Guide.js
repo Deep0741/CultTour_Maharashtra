@@ -52,10 +52,11 @@ const guideSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  isApproved: {
-    type: Boolean,
-    default: false
-  },
+  status: {
+  type: String,
+  enum: ["pending", "approved", "rejected"],
+  default: "pending"
+},
   documents: [{
     type: {
       type: String,
@@ -79,6 +80,6 @@ const guideSchema = new mongoose.Schema({
 guideSchema.index({ user: 1 });
 guideSchema.index({ rating: -1 });
 guideSchema.index({ pricePerDay: 1 });
-guideSchema.index({ isApproved: 1 });
+guideSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Guide', guideSchema);

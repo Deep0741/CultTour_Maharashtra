@@ -40,9 +40,11 @@ const userSchema = new mongoose.Schema({
     default: true
   },
   isVerified: {
-    type: Boolean,
-    default: false
-  },
+  type: Boolean,
+  default: function () {
+    return this.role !== "guide"; 
+  }
+},
   refreshToken: {
   type: String,
   select: false

@@ -25,6 +25,9 @@ import GuideLicense from "./pages/guide/GuideLicense";
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
+import PendingGuides from "./pages/admin/PendingGuides";
+import UsersManagement from "./pages/admin/UsersManagement";
+import DestinationsManagement from "./pages/admin/DestinationsManagement";
 
 //DestinationDetains
 import DestinationDetails from "./pages/public/DestinationDetails";
@@ -88,14 +91,42 @@ function App() {
               />  
 
               {/* Admin Routes */}
-              <Route
-                path="/admin/dashboard"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
+                  <Route
+                    path="/admin/dashboard"
+                    element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/admin/guides"
+                    element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <PendingGuides />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/admin/users"
+                    element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                    <UsersManagement/>
+                    </ProtectedRoute>
+                    }
+                    />
+
+                    <Route
+                    path="/admin/destinations"
+                    element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                    <DestinationsManagement/>
+                    </ProtectedRoute>
+                    }
+                    />
+
                  {/* Profile Route */}
                  <Route
                 path="/profile"

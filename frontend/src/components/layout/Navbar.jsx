@@ -2,12 +2,31 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { FaUser, FaSignOutAlt, FaHome, FaMapMarkedAlt, FaUtensils, FaUsers } from 'react-icons/fa';
 import { MdDashboard } from 'react-icons/md';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from "react";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+
+  const handleClickOutside = (event) => {
+
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setShowDropdown(false);
+    }
+
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+
+}, []);
 
   const handleLogout = async () => {
     logout();
@@ -65,7 +84,7 @@ const Navbar = () => {
           <div className="flex items-center space-x-4">
               {user ? (
 
-                  <div className="relative">
+                  <div className="relative" ref={dropdownRef}>
 
                     <button
                       onClick={() => setShowDropdown(!showDropdown)}
@@ -82,10 +101,11 @@ const Navbar = () => {
                     </button>
 
                     {showDropdown && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2">
 
                         <Link
                           to="/profile"
+                          onClick={() => setShowDropdown(false)}
                           className="flex items-center px-4 py-2 hover:bg-gray-100"
                         >
                           Profile
@@ -93,16 +113,20 @@ const Navbar = () => {
 
                         <Link
                           to={getDashboardLink()}
+                          onClick={() => setShowDropdown(false)}
                           className="flex items-center px-4 py-2 hover:bg-gray-100"
                         >
                           Dashboard
                         </Link>
 
                         <button
-                          onClick={handleLogout}
-                          className="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100 w-full text-left"
+                        onClick={() => {
+                        handleLogout();
+                        setShowDropdown(false);
+                        }}
+                        className="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100 w-full text-left"
                         >
-                          Logout
+                        Logout
                         </button>
 
                       </div>
@@ -131,5 +155,7 @@ const Navbar = () => {
     </nav>
   );
 };
+
+
 
 export default Navbar;

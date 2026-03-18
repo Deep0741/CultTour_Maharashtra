@@ -3,6 +3,7 @@ const Booking = require('../models/Booking');
 const Payment = require('../models/Payment');
 const Destination = require('../models/Destination');
 const Guide = require('../models/Guide');
+const Notification = require("../models/Notification");
 
 // @desc    Get dashboard analytics
 // @route   GET /api/v1/admin/analytics
@@ -209,20 +210,24 @@ exports.getAllBookings = async (req, res, next) => {
 // @desc    Get pending guide approvals
 // @route   GET /api/v1/admin/guides/pending
 // @access  Private/Admin
-exports.getPendingGuides = async (req, res, next) => {
-  try {
-    const guides = await Guide.find({ isApproved: false })
-      .populate('user', 'name email phone avatar')
-      .sort({ createdAt: -1 });
+exports.getPendingGuides = async (req,res,next)=>{
 
-    res.status(200).json({
-      success: true,
-      count: guides.length,
-      data: guides
-    });
-  } catch (error) {
-    next(error);
-  }
+try{
+
+const guides = await Guide.find({ status:"pending" })
+.populate("user","name email phone avatar")
+.sort({ createdAt:-1 });
+
+res.json({
+success:true,
+count:guides.length,
+data:guides
+});
+
+}catch(error){
+next(error);
+}
+
 };
 
 // @desc    Delete user
@@ -246,4 +251,150 @@ exports.deleteUser = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+// @desc    Approve guide
+// @route   PUT /api/v1/admin/guides/:id/approve
+// @access  Private/Admin
+exports.approveGuide = async (req,res)=>{
+
+try{
+
+const guide = await Guide.findByIdAndUpdate(
+req.params.id,
+{ status:"approved" },
+{ new:true }
+);
+
+await User.findByIdAndUpdate(
+guide.user,
+{ isVerified:true }
+);
+
+res.json({
+success:true,
+message:"Guide approved successfully"
+});
+
+}catch(error){
+
+res.status(500).json({
+success:false,
+message:error.message
+});
+
+}
+
+};
+
+// @desc    Get all payments
+// @route   GET /api/v1/admin/payments
+// @access  Private/Admin
+exports.getAllPayments = async (req, res, next) => {
+  try {
+
+    const payments = await Payment.find()
+      .populate('booking')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: payments.length,
+      data: payments
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// @desc    Delete guide
+// @route   DELETE /api/v1/admin/guides/:id
+// @access  Private/Admin
+exports.deleteGuide = async (req, res, next) => {
+  try {
+
+    const guide = await Guide.findByIdAndDelete(req.params.id);
+
+    if (!guide) {
+      return res.status(404).json({
+        success: false,
+        message: "Guide not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Guide removed successfully"
+    });
+
+  } catch (error) {
+    next(error);
+  }
+}
+
+  // @desc    Get notifications
+  // @route   GET /api/v1/admin/notifications
+  // @access  Private/Admin
+
+  
+
+// Get admin notifications
+exports.getNotifications = async (req, res) => {
+
+  try {
+
+    const notifications = await Notification
+      .find()
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    res.json({
+      success: true,
+      data: notifications
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+
+  }
+
+};
+
+// Reject guide
+exports.rejectGuide = async (req,res)=>{
+
+try{
+
+const guide = await Guide.findByIdAndUpdate(
+req.params.id,
+{ status:"rejected" },
+{ new:true }
+);
+
+if(!guide){
+return res.status(404).json({
+success:false,
+message:"Guide not found"
+});
+}
+
+res.json({
+success:true,
+message:"Guide rejected"
+});
+
+}catch(error){
+
+res.status(500).json({
+success:false,
+message:error.message
+});
+
+}
+
 };
