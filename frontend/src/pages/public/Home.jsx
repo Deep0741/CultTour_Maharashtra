@@ -14,6 +14,7 @@ useEffect(() => {
     })
     .catch(err => console.log(err));
 }, []);
+
 // scroll popular destination 
 useEffect(() => {
   const container = document.querySelector(".overflow-x-auto");
@@ -35,9 +36,19 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen">
+
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section
+        className="relative text-white py-20 bg-cover bg-center"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1651431301792-39edddc3b1e9?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')"
+        }}
+      >
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-5xl font-bold mb-6">
               Discover Maharashtra's Rich Heritage
@@ -110,34 +121,35 @@ useEffect(() => {
           </div>
 
           <div className="overflow-x-auto no-scrollbar">
-  <div className="flex gap-6 w-max">
-    {destinations.map((item) => (
-      <div
-        key={item._id}
-        className="min-w-[300px] bg-white shadow rounded-lg overflow-hidden"
-      >
-        <img
-          src={item.image}
-          alt={item.name}
-          className="h-48 w-full object-cover"
-        />
-        <div className="p-4">
-          <h3 className="text-lg font-semibold mb-2">{item.name}</h3>
-          <p className="text-gray-600 text-sm mb-3 line-clamp-3">
-            {item.description}
-          </p>
+            <div className="flex gap-6 w-max">
+              {destinations.map((item) => (
+                <div
+                  key={item._id}
+                  className="min-w-[300px] bg-white shadow rounded-lg overflow-hidden"
+                >
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="h-48 w-full object-cover"
+                  />
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold mb-2">{item.name}</h3>
+                    <p className="text-gray-600 text-sm mb-3 line-clamp-3">
+                      {item.description}
+                    </p>
 
-          <Link
-            to={`/destinations/${item._id}`}
-            className="text-primary-600 font-medium hover:underline"
-          >
-            Learn More →
-          </Link>
-        </div>
-      </div>
-    ))}
-  </div>
-</div>
+                    <Link
+                      to={`/destinations/${item._id}`}
+                      className="text-primary-600 font-medium hover:underline"
+                    >
+                      Learn More →
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -153,6 +165,7 @@ useEffect(() => {
           </Link>
         </div>
       </section>
+
     </div>
   );
 };
