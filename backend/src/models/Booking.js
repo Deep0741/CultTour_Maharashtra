@@ -12,6 +12,12 @@ const bookingSchema = new mongoose.Schema(
       ref: "Guide",
       required: true,
     },
+
+    // ✅ ADD THIS
+    guideName: {
+      type: String,
+    },
+
     destination: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Destination",

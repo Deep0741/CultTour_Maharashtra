@@ -14,9 +14,17 @@ router.post("/create", async (req, res) => {
       return res.status(400).json({ message: "Missing required fields: userId, guideId, destinationId" });
     }
 
+    // ✅ FETCH GUIDE + USER NAME
+    const guideData = await Guide.findById(guideId).populate("user");
+
+    if (!guideData) {
+      return res.status(404).json({ message: "Guide not found" });
+    }
+
     const booking = await Booking.create({
       tourist: userId,
       guide: guideId,
+      guideName: guideData.user?.name || "Guide", // ✅ THIS WAS MISSING
       destination: destinationId,
       date: date ? new Date(date) : new Date(),
       amount: amount || 0,
@@ -24,16 +32,16 @@ router.post("/create", async (req, res) => {
       paymentStatus: "pending",
     });
 
-    // Notify the guide about the new booking request
     await Notification.create({
       title: "New Booking Request",
-      message: `A tourist has booked you for a destination tour. Check your dashboard to accept or reject.`,
+      message: `A tourist has booked you for a destination tour.`,
       type: "booking",
       guideId: guideId,
       bookingId: booking._id,
     });
 
     res.json({ success: true, data: booking });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -85,7 +93,13 @@ router.get("/guide/:guideId", async (req, res) => {
 router.get("/user/:userId", async (req, res) => {
   try {
     const bookings = await Booking.find({ tourist: req.params.userId })
-      .populate("guide", "bio pricePerDay")
+      .populate({
+        path: "guide",
+        populate: {
+          path: "user",
+          select: "name email"
+        }
+      })
       .populate("destination", "name location image")
       .sort({ createdAt: -1 });
 
@@ -121,7 +135,13 @@ router.get("/:id", async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
       .populate("tourist", "name email phone")
-      .populate("guide")
+      .populate({
+  path: "guide",
+  populate: {
+    path: "user",
+    select: "name email"
+  }
+})
       .populate("destination", "name location image");
 
     if (!booking) {

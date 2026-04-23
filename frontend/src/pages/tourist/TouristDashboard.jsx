@@ -110,7 +110,7 @@ export default function TouristDashboard() {
                         {b.destination?.name || "—"}
                       </td>
                       <td className="py-3 pr-4 text-gray-600">
-                        {b.guide?.user?.name || b.guide?.name || "—"}
+                        {b.guideName || b.guide?.user?.name || "—"}
                       </td>
                       <td className="py-3 pr-4 text-gray-500">
                         {b.date
