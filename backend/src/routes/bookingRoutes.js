@@ -5,13 +5,15 @@ const Guide = require("../models/Guide");
 const Notification = require("../models/Notification");
 
 
-// ✅ CREATE BOOKING
+// ✅ CREATE BOOKING (FINAL FIXED)
 router.post("/create", async (req, res) => {
   try {
     const { userId, guideId, destinationId, date, amount } = req.body;
 
     if (!userId || !guideId || !destinationId) {
-      return res.status(400).json({ message: "Missing required fields: userId, guideId, destinationId" });
+      return res.status(400).json({
+        message: "Missing required fields: userId, guideId, destinationId",
+      });
     }
 
     // ✅ FETCH GUIDE + USER NAME
@@ -24,7 +26,7 @@ router.post("/create", async (req, res) => {
     const booking = await Booking.create({
       tourist: userId,
       guide: guideId,
-      guideName: guideData.user?.name || "Guide", // ✅ THIS WAS MISSING
+      guideName: guideData.user?.name || "Guide", // ✅ FIX
       destination: destinationId,
       date: date ? new Date(date) : new Date(),
       amount: amount || 0,
@@ -34,15 +36,15 @@ router.post("/create", async (req, res) => {
 
     await Notification.create({
       title: "New Booking Request",
-      message: `A tourist has booked you for a destination tour.`,
+      message: "A tourist has booked you for a destination tour.",
       type: "booking",
       guideId: guideId,
       bookingId: booking._id,
     });
 
     res.json({ success: true, data: booking });
-
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
