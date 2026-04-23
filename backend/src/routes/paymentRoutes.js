@@ -1,40 +1,50 @@
 const express = require("express");
 const router = express.Router();
-//const Razorpay = require("razorpay");
-//const crypto = require("crypto");
-
+const Razorpay = require("razorpay");
 const Booking = require("../models/Booking");
-const Payment = require("../models/Payment");
 
-// const razorpay = new Razorpay({
-//   key_id: process.env.RAZORPAY_KEY,
-//   key_secret: process.env.RAZORPAY_SECRET
-// });
+// 🔐 RAZORPAY INSTANCE
+const razorpay = new Razorpay({
+  key_id: "rzp_test_Sgvei3dA2INUG5",
+  key_secret: "2k1QjfHTQ1vIbaBvpLStcDT0",
+});
 
-// CREATE ORDER
+// ✅ CREATE ORDER
 router.post("/create-order", async (req, res) => {
   try {
+    const { bookingId, amount } = req.body;
+
+    const options = {
+      amount: amount * 100,
+      currency: "INR",
+      receipt: `booking_${bookingId}`,
+    };
+
+    const order = await razorpay.orders.create(options);
+
     res.json({
-      id: "mock_order_123",
-      amount: 1000
+      success: true,
+      order,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// VERIFY
+// ✅ VERIFY PAYMENT (SIMPLIFIED DEMO)
 router.post("/verify", async (req, res) => {
   try {
     const { bookingId } = req.body;
 
-    // mark booking as confirmed
-    await Booking.findByIdAndUpdate(bookingId, {
-      status: "CONFIRMED"
-    });
+    const booking = await Booking.findByIdAndUpdate(
+      bookingId,
+      {
+        paymentStatus: "paid",
+      },
+      { new: true }
+    );
 
-    res.json({ success: true });
-
+    res.json({ success: true, data: booking });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

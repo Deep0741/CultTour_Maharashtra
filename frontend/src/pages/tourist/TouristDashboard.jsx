@@ -22,28 +22,33 @@ export default function TouristDashboard() {
   }, [user]);
 
   // 🔹 PAYMENT FUNCTION (RAZORPAY DEMO)
-  const handlePayment = (booking) => {
+  const handlePayment = async (booking) => {
+  try {
+    // 🔹 1. Create order from backend
+    const { data } = await api.post("/payment/create-order", {
+      bookingId: booking._id,
+      amount: booking.amount,
+    });
+
     const options = {
-      key: "rzp_test_1234567890",
-      amount: booking.amount * 100,
+      key: "rzp_test_Sgvei3dA2INUG5",
+      amount: data.order.amount,
       currency: "INR",
+      order_id: data.order.id,
+
       name: "CulTour Maharashtra",
-      description: "Guide Booking Payment",
+      description: "Guide Booking",
 
       handler: async function (response) {
-        console.log("Payment success:", response);
+        console.log("SUCCESS:", response);
 
-        try {
-          await api.post("/payment/pay", {
-            bookingId: booking._id,
-          });
+        // 🔹 2. Verify payment
+        await api.post("/payment/verify", {
+          bookingId: booking._id,
+        });
 
-          alert("Payment successful ✅");
-          window.location.reload();
-        } catch (err) {
-          console.error(err);
-          alert("Payment update failed");
-        }
+        alert("Payment successful ✅");
+        window.location.reload();
       },
 
       modal: {
@@ -53,8 +58,8 @@ export default function TouristDashboard() {
       },
 
       prefill: {
-        name: localStorage.getItem("userName") || "User",
-        email: localStorage.getItem("userEmail") || "test@gmail.com",
+        name: localStorage.getItem("userName"),
+        email: localStorage.getItem("userEmail"),
       },
 
       theme: {
@@ -64,7 +69,12 @@ export default function TouristDashboard() {
 
     const rzp = new window.Razorpay(options);
     rzp.open();
-  };
+
+  } catch (err) {
+    console.error(err);
+    alert("Payment failed");
+  }
+};
 
   return (
     <div className="bg-gray-100 min-h-screen">
