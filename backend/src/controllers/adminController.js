@@ -1,124 +1,53 @@
-const User = require('../models/User');
-const Booking = require('../models/Booking');
-const Payment = require('../models/Payment');
-const Destination = require('../models/Destination');
-const Guide = require('../models/Guide');
+const User = require("../models/User");
+const Booking = require("../models/Booking");
+const Destination = require("../models/Destination");
+const Guide = require("../models/Guide");
 const Notification = require("../models/Notification");
 
-// @desc    Get dashboard analytics
-// @route   GET /api/v1/admin/analytics
-// @access  Private/Admin
+
+// ===================== DASHBOARD =====================
 exports.getAnalytics = async (req, res, next) => {
   try {
-    // Total users by role
-    const userStats = await User.aggregate([
-      {
-        $group: {
-          _id: '$role',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
+    const totalUsers = await User.countDocuments({ role: "tourist" });
+    const totalGuides = await Guide.countDocuments({ status: "approved" });
+    const pendingGuides = await Guide.countDocuments({ status: "pending" });
+    const totalBookings = await Booking.countDocuments();
+    const totalDestinations = await Destination.countDocuments({ isActive: true });
 
-    // Total bookings by status
-    const bookingStats = await Booking.aggregate([
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-          totalAmount: { $sum: '$totalAmount' }
-        }
-      }
-    ]);
-
-    // Total revenue (platform commission)
-    const revenueStats = await Booking.aggregate([
-      {
-        $match: { status: 'completed' }
-      },
+    const revenueData = await Booking.aggregate([
+      { $match: { paymentStatus: "paid" } },
       {
         $group: {
           _id: null,
-          totalRevenue: { $sum: '$platformCommission' },
-          totalBookings: { $sum: 1 }
-        }
-      }
+          totalRevenue: { $sum: "$amount" },
+        },
+      },
     ]);
 
-    // Most visited destinations
-    const topDestinations = await Destination.find({ isActive: true })
-      .sort({ visitCount: -1 })
-      .limit(5)
-      .select('name visitCount rating images');
-
-    // Top rated guides
-    const topGuides = await Guide.find({ isApproved: true })
-      .sort({ rating: -1 })
-      .limit(5)
-      .populate('user', 'name avatar')
-      .select('rating totalReviews totalBookings');
-
-    // Recent bookings
-    const recentBookings = await Booking.find()
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .populate('tourist', 'name email')
-      .populate('destination', 'name')
-      .select('status totalAmount createdAt');
-
-    // Monthly revenue trend (last 6 months)
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
-    const monthlyRevenue = await Booking.aggregate([
-      {
-        $match: {
-          status: 'completed',
-          createdAt: { $gte: sixMonthsAgo }
-        }
-      },
-      {
-        $group: {
-          _id: {
-            year: { $year: '$createdAt' },
-            month: { $month: '$createdAt' }
-          },
-          revenue: { $sum: '$platformCommission' },
-          bookings: { $sum: 1 }
-        }
-      },
-      {
-        $sort: { '_id.year': 1, '_id.month': 1 }
-      }
-    ]);
-
-    res.status(200).json({
+    res.json({
       success: true,
       data: {
-        userStats,
-        bookingStats,
-        revenue: revenueStats[0] || { totalRevenue: 0, totalBookings: 0 },
-        topDestinations,
-        topGuides,
-        recentBookings,
-        monthlyRevenue
-      }
+        users: totalUsers,
+        guides: totalGuides,
+        pendingGuides,
+        bookings: totalBookings,
+        destinations: totalDestinations,
+        revenue: revenueData[0]?.totalRevenue || 0,
+      },
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Get all users
-// @route   GET /api/v1/admin/users
-// @access  Private/Admin
+
+// ===================== USERS =====================
 exports.getUsers = async (req, res, next) => {
   try {
-    const { role, isActive, page = 1, limit = 20 } = req.query;
+    const { role, page = 1, limit = 50 } = req.query;
 
     const query = {};
     if (role) query.role = role;
-    if (isActive !== undefined) query.isActive = isActive === 'true';
 
     const skip = (page - 1) * limit;
 
@@ -133,18 +62,30 @@ exports.getUsers = async (req, res, next) => {
       success: true,
       count: users.length,
       total,
-      page: parseInt(page),
-      pages: Math.ceil(total / limit),
-      data: users
+      data: users,
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Update user status
-// @route   PUT /api/v1/admin/users/:id/status
-// @access  Private/Admin
+
+// ===================== DELETE USER =====================
+exports.deleteUser = async (req, res, next) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// ===================== UPDATE USER STATUS =====================
 exports.updateUserStatus = async (req, res, next) => {
   try {
     const { isActive } = req.body;
@@ -156,28 +97,24 @@ exports.updateUserStatus = async (req, res, next) => {
     );
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
     res.status(200).json({
       success: true,
-      message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
-      data: user
+      message: `User ${isActive ? "activated" : "deactivated"} successfully`,
+      data: user,
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Get all bookings
-// @route   GET /api/v1/admin/bookings
-// @access  Private/Admin
+
+// ===================== ALL BOOKINGS =====================
 exports.getAllBookings = async (req, res, next) => {
   try {
-    const { status, page = 1, limit = 20 } = req.query;
+    const { status, page = 1, limit = 50 } = req.query;
 
     const query = {};
     if (status) query.status = status;
@@ -185,9 +122,12 @@ exports.getAllBookings = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const bookings = await Booking.find(query)
-      .populate('tourist', 'name email')
-      .populate('guide', 'user')
-      .populate('destination', 'name')
+      .populate("tourist", "name email")
+      .populate({
+        path: "guide",
+        populate: { path: "user", select: "name email" },
+      })
+      .populate("destination", "name location")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -198,203 +138,141 @@ exports.getAllBookings = async (req, res, next) => {
       success: true,
       count: bookings.length,
       total,
-      page: parseInt(page),
-      pages: Math.ceil(total / limit),
-      data: bookings
+      data: bookings,
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Get pending guide approvals
-// @route   GET /api/v1/admin/guides/pending
-// @access  Private/Admin
-exports.getPendingGuides = async (req,res,next)=>{
 
-try{
-
-const guides = await Guide.find({ status:"pending" })
-.populate("user","name email phone avatar")
-.sort({ createdAt:-1 });
-
-res.json({
-success:true,
-count:guides.length,
-data:guides
-});
-
-}catch(error){
-next(error);
-}
-
-};
-
-// @desc    Delete user
-// @route   DELETE /api/v1/admin/users/:id
-// @access  Private/Admin
-exports.deleteUser = async (req, res, next) => {
+// ===================== PENDING GUIDES =====================
+exports.getPendingGuides = async (req, res, next) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: 'User deleted successfully'
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-// @desc    Approve guide
-// @route   PUT /api/v1/admin/guides/:id/approve
-// @access  Private/Admin
-exports.approveGuide = async (req,res)=>{
-
-try{
-
-const guide = await Guide.findByIdAndUpdate(
-req.params.id,
-{ status:"approved" },
-{ new:true }
-);
-
-await User.findByIdAndUpdate(
-guide.user,
-{ isVerified:true }
-);
-
-res.json({
-success:true,
-message:"Guide approved successfully"
-});
-
-}catch(error){
-
-res.status(500).json({
-success:false,
-message:error.message
-});
-
-}
-
-};
-
-// @desc    Get all payments
-// @route   GET /api/v1/admin/payments
-// @access  Private/Admin
-exports.getAllPayments = async (req, res, next) => {
-  try {
-
-    const payments = await Payment.find()
-      .populate('booking')
+    const guides = await Guide.find({ status: "pending" })
+      .populate("user", "name email phone avatar")
       .sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      count: payments.length,
-      data: payments
-    });
-
-  } catch (error) {
-    next(error);
-  }
-};
-
-
-// @desc    Delete guide
-// @route   DELETE /api/v1/admin/guides/:id
-// @access  Private/Admin
-exports.deleteGuide = async (req, res, next) => {
-  try {
-
-    const guide = await Guide.findByIdAndDelete(req.params.id);
-
-    if (!guide) {
-      return res.status(404).json({
-        success: false,
-        message: "Guide not found"
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Guide removed successfully"
-    });
-
-  } catch (error) {
-    next(error);
-  }
-}
-
-  // @desc    Get notifications
-  // @route   GET /api/v1/admin/notifications
-  // @access  Private/Admin
-
-  
-
-// Get admin notifications
-exports.getNotifications = async (req, res) => {
-
-  try {
-
-    const notifications = await Notification
-      .find()
-      .sort({ createdAt: -1 })
-      .limit(10);
 
     res.json({
       success: true,
-      data: notifications
+      count: guides.length,
+      data: guides,
     });
-
   } catch (error) {
-
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-
+    next(error);
   }
-
 };
 
-// Reject guide
-exports.rejectGuide = async (req,res)=>{
 
-try{
+// ===================== ALL APPROVED GUIDES =====================
+exports.getApprovedGuides = async (req, res) => {
+  try {
+    const guides = await Guide.find({ status: "approved" })
+      .populate("user", "name email phone avatar")
+      .sort({ createdAt: -1 });
 
-const guide = await Guide.findByIdAndUpdate(
-req.params.id,
-{ status:"rejected" },
-{ new:true }
-);
+    res.json({
+      success: true,
+      data: guides,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
-if(!guide){
-return res.status(404).json({
-success:false,
-message:"Guide not found"
-});
-}
 
-res.json({
-success:true,
-message:"Guide rejected"
-});
+// ===================== ALL GUIDES (any status) =====================
+exports.getAllGuides = async (req, res) => {
+  try {
+    const guides = await Guide.find()
+      .populate("user", "name email phone avatar")
+      .sort({ createdAt: -1 });
 
-}catch(error){
+    res.json({
+      success: true,
+      data: guides,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
-res.status(500).json({
-success:false,
-message:error.message
-});
 
-}
+// ===================== APPROVE GUIDE =====================
+exports.approveGuide = async (req, res) => {
+  try {
+    const guide = await Guide.findByIdAndUpdate(
+      req.params.id,
+      { status: "approved" },
+      { new: true }
+    );
 
+    if (!guide) {
+      return res.status(404).json({ success: false, message: "Guide not found" });
+    }
+
+    await User.findByIdAndUpdate(guide.user, { isVerified: true });
+
+    // Remove any pending notifications for this guide
+    await Notification.deleteMany({ guideId: guide._id, type: "guide" });
+
+    res.json({ success: true, message: "Guide approved successfully", data: guide });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// ===================== REJECT GUIDE =====================
+exports.rejectGuide = async (req, res) => {
+  try {
+    const guide = await Guide.findByIdAndUpdate(
+      req.params.id,
+      { status: "rejected" },
+      { new: true }
+    );
+
+    if (!guide) {
+      return res.status(404).json({ success: false, message: "Guide not found" });
+    }
+
+    res.json({ success: true, message: "Guide rejected", data: guide });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// ===================== DELETE GUIDE =====================
+exports.deleteGuide = async (req, res, next) => {
+  try {
+    await Guide.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: "Guide removed successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// ===================== NOTIFICATIONS =====================
+exports.getNotifications = async (req, res) => {
+  try {
+    const notifications = await Notification.find()
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: notifications });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// ===================== CLEAR NOTIFICATIONS =====================
+exports.clearNotifications = async (req, res) => {
+  await Notification.deleteMany({});
+  res.json({ success: true, message: "All notifications cleared" });
 };
