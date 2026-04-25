@@ -1,100 +1,199 @@
-export default function TouristDashboard(){
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
-return(
+export default function TouristDashboard() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-<div className="bg-gray-100 min-h-screen">
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-<div className="max-w-6xl mx-auto px-4 py-10">
+  // 🔹 FETCH BOOKINGS
+  useEffect(() => {
+    if (!user?._id) return;
 
-<h1 className="text-3xl font-bold mb-8">
-Tourist Dashboard
-</h1>
+    api
+      .get(`/bookings/user/${user._id}`)
+      .then((res) => setBookings(res.data))
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  }, [user]);
 
+  // 🔹 PAYMENT FUNCTION (RAZORPAY DEMO)
+  const handlePayment = async (booking) => {
+  try {
+    // 🔹 1. Create order from backend
+    const { data } = await api.post("/payment/create-order", {
+      bookingId: booking._id,
+      amount: booking.amount,
+    });
 
-{/* SEARCH GUIDES CARD */}
+    const options = {
+      key: "rzp_test_Sgvei3dA2INUG5",
+      amount: data.order.amount,
+      currency: "INR",
+      order_id: data.order.id,
 
-<div className="bg-white p-6 rounded-xl shadow mb-8">
+      name: "CulTour Maharashtra",
+      description: "Guide Booking",
 
-<h2 className="text-xl font-semibold mb-4">
-Find a Guide
-</h2>
+      handler: async function (response) {
+        console.log("SUCCESS:", response);
 
-<div className="flex flex-wrap gap-4">
+        // 🔹 2. Verify payment
+        await api.post("/payment/verify", {
+          bookingId: booking._id,
+        });
 
-<select className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500">
+        alert("Payment successful ✅");
+        window.location.reload();
+      },
 
-<option>Mumbai</option>
-<option>Pune</option>
-<option>Nashik</option>
-<option>Aurangabad</option>
+      modal: {
+        ondismiss: function () {
+          alert("Payment cancelled ❌");
+        },
+      },
 
-</select>
+      prefill: {
+        name: localStorage.getItem("userName"),
+        email: localStorage.getItem("userEmail"),
+      },
 
-<select className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500">
+      theme: {
+        color: "#f97316",
+      },
+    };
 
-<option>Heritage</option>
-<option>Food Walk</option>
-<option>Adventure</option>
+    const rzp = new window.Razorpay(options);
+    rzp.open();
 
-</select>
+  } catch (err) {
+    console.error(err);
+    alert("Payment failed");
+  }
+};
 
-<button className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition">
+  return (
+    <div className="bg-gray-100 min-h-screen">
+      <div className="max-w-6xl mx-auto px-4 py-10">
 
-Search
+        {/* HEADER */}
+        <h1 className="text-3xl font-bold mb-2">
+          Welcome back, {user?.name || "Tourist"} 👋
+        </h1>
+        <p className="text-gray-500 mb-8">
+          Explore Maharashtra with a local guide.
+        </p>
 
-</button>
+        {/* BOOKINGS */}
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
 
-</div>
+          <div className="px-6 py-4 border-b">
+            <h2 className="text-xl font-semibold text-gray-800">
+              My Bookings
+            </h2>
+          </div>
 
-</div>
+          {loading ? (
+            <p className="p-6 text-gray-400">Loading bookings...</p>
+          ) : bookings.length === 0 ? (
+            <div className="p-6 text-center">
+              <p className="text-gray-500 mb-4">
+                You haven't booked any tours yet.
+              </p>
+              <button
+                onClick={() => navigate("/destinations")}
+                className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition"
+              >
+                Explore Destinations
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
 
+                <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
+                  <tr>
+                    <th className="px-6 py-3 text-left">Destination</th>
+                    <th className="px-6 py-3 text-left">Guide</th>
+                    <th className="px-6 py-3 text-left">Date</th>
+                    <th className="px-6 py-3 text-left">Amount</th>
+                    <th className="px-6 py-3 text-left">Status</th>
+                  </tr>
+                </thead>
 
-{/* QUICK ACTIONS */}
+                <tbody className="divide-y">
+                  {bookings.map((b) => (
+                    <tr key={b._id} className="hover:bg-gray-50 transition">
 
-<div className="grid md:grid-cols-3 gap-6">
+                      <td className="px-6 py-4 font-medium text-gray-800">
+                        {b.destination?.name || "—"}
+                      </td>
 
-<div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+                      <td className="px-6 py-4 text-gray-600">
+                        {b.guideName || "—"}
+                      </td>
 
-<h3 className="font-semibold mb-2">
-My Bookings
-</h3>
+                      <td className="px-6 py-4 text-gray-500">
+                        {b.date
+                          ? new Date(b.date).toLocaleDateString("en-IN")
+                          : "—"}
+                      </td>
 
-<p className="text-gray-600 text-sm">
-View your upcoming guide bookings.
-</p>
+                      <td className="px-6 py-4 font-semibold">
+                        ₹{b.amount}
+                      </td>
 
-</div>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
 
-<div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+                          {/* STATUS */}
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              b.status === "accepted"
+                                ? "bg-green-100 text-green-700"
+                                : b.status === "rejected"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-yellow-100 text-yellow-700"
+                            }`}
+                          >
+                            {b.status}
+                          </span>
 
-<h3 className="font-semibold mb-2">
-Explore Destinations
-</h3>
+                          {/* PAY BUTTON */}
+                          {b.status === "accepted" &&
+                            b.paymentStatus !== "paid" && (
+                              <button
+                                onClick={() => handlePayment(b)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs"
+                              >
+                                Pay
+                              </button>
+                            )}
 
-<p className="text-gray-600 text-sm">
-Discover amazing places in Maharashtra.
-</p>
+                          {/* PAID */}
+                          {b.paymentStatus === "paid" && (
+                            <span className="text-green-600 text-xs font-semibold">
+                              Paid ✅
+                            </span>
+                          )}
+                        </div>
+                      </td>
 
-</div>
+                    </tr>
+                  ))}
+                </tbody>
 
-<div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+              </table>
+            </div>
+          )}
 
-<h3 className="font-semibold mb-2">
-Food Experiences
-</h3>
+        </div>
 
-<p className="text-gray-600 text-sm">
-Explore authentic Maharashtrian cuisines.
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-);
-
+      </div>
+    </div>
+  );
 }
