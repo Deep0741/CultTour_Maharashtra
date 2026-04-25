@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext';
+
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -12,9 +13,10 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Destinations from './pages/public/Destinations';
 import Cuisines from './pages/public/Cuisines';
-import CuisineDetails from "./pages/public/CuisineDetails";
+import CuisineDetails from './pages/public/CuisineDetails';
 import Guides from './pages/public/Guides';
-import Profile from "./pages/Profile";
+import DestinationDetails from './pages/public/DestinationDetails';
+import Profile from './pages/Profile';
 
 // Tourist pages
 import TouristDashboard from './pages/tourist/Dashboard';
@@ -23,10 +25,7 @@ import TouristDashboard from './pages/tourist/Dashboard';
 import GuideDashboard from './pages/guide/Dashboard';
 
 // Admin pages
-import AdminDashboard from './pages/admin/ashboard';
-
-//DestinationDetails
-import DestinationDetails from "./pages/public/DestinationDetails";
+import AdminDashboard from './pages/admin/Dashboard';
 
 function App() {
   return (
@@ -34,6 +33,7 @@ function App() {
       <Router>
         <div className="flex flex-col min-h-screen">
           <Navbar />
+
           <main className="flex-grow">
             <Routes>
               {/* Public Routes */}
@@ -41,15 +41,10 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/destinations" element={<Destinations />} />
+              <Route path="/destinations/:id" element={<DestinationDetails />} />
               <Route path="/cuisines" element={<Cuisines />} />
               <Route path="/cuisine/:id" element={<CuisineDetails />} />
               <Route path="/guides" element={<Guides />} />
-              <Route path="/destinations/:id" element={<DestinationDetails />} />
-<<<<<<< Updated upstream
-            
-=======
-              <Route path="/booking/confirmation" element={<BookingConfirmation />} />
->>>>>>> Stashed changes
 
               {/* Tourist Routes */}
               <Route
@@ -70,17 +65,6 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-<<<<<<< Updated upstream
-=======
-              <Route
-                path="/guide/license"
-                element={
-                  <ProtectedRoute allowedRoles={['guide']}>
-                    <GuideLicense />
-                  </ProtectedRoute>
-                }
-              />
->>>>>>> Stashed changes
 
               {/* Admin Routes */}
               <Route
@@ -91,41 +75,9 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-<<<<<<< Updated upstream
-                 {/* Profile Route */}
-                 <Route
-=======
-
-              <Route
-                path="/admin/guides"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <PendingGuides />
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/admin/users"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <UsersManagement />
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/admin/destinations"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <DestinationsManagement />
-                  </ProtectedRoute>
-                }
-              />
 
               {/* Profile Route */}
               <Route
->>>>>>> Stashed changes
                 path="/profile"
                 element={
                   <ProtectedRoute allowedRoles={['tourist', 'guide', 'admin']}>
@@ -135,6 +87,7 @@ function App() {
               />
             </Routes>
           </main>
+
           <Footer />
         </div>
 
