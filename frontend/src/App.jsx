@@ -12,8 +12,9 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Destinations from './pages/public/Destinations';
 import Cuisines from './pages/public/Cuisines';
+import CuisineDetails from './pages/public/CuisineDetails';
 import Guides from './pages/public/Guides';
-import Profile from "./pages/Profile";
+import Profile from './pages/Profile';
 
 
 // Tourist pages
@@ -57,6 +58,7 @@ function App() {
               <Route path="/reset-password/:token" element={<ResetPassword />} />
               <Route path="/destinations" element={<Destinations />} />
               <Route path="/cuisines" element={<Cuisines />} />
+              <Route path="/cuisine/:id" element={<CuisineDetails />} />
               <Route path="/guides" element={<Guides />} />
               <Route path="/destinations/:id" element={<DestinationDetails />} />
               <Route path="/booking/confirmation" element={<BookingConfirmation />} />
