@@ -44,9 +44,22 @@ export default function GuideLicense() {
             <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 mb-6 text-center animate-scale-in">
               <FiCheckCircle className="text-emerald-500 mx-auto mb-3" size={36} />
               <p className="font-bold text-emerald-700">Verification Submitted!</p>
-              <p className="text-sm text-surface-500 mt-1">Your license is under review. You'll get dashboard access once approved.</p>
+              <p className="text-sm text-surface-500 mt-1 mb-4">Your license is under review. You will be able to log in once the admin approves your account.</p>
+              <button 
+                onClick={() => {
+                  localStorage.removeItem("token");
+                  localStorage.removeItem("user");
+                  localStorage.removeItem("userRole");
+                  window.location.href = "/login";
+                }}
+                className="btn-primary w-full"
+              >
+                Return to Login
+              </button>
             </div>
           )}
+
+          {!submitted && (
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -79,11 +92,11 @@ export default function GuideLicense() {
 
             <button type="submit" disabled={submitted || loading}
               className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : "Submit for Verification"}
+              {loading && <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+              {loading ? "Submitting..." : "Submit for Verification"}
             </button>
           </form>
+          )}
         </div>
       </div>
     </div>

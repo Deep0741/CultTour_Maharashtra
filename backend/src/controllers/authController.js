@@ -93,6 +93,25 @@ if (role && user.role !== role) {
       });
     }
 
+    // Guide approval check
+    if (user.role === 'guide') {
+      const guide = await Guide.findOne({ user: user._id });
+      if (guide) {
+        if (guide.status === 'pending') {
+          return res.status(403).json({
+            success: false,
+            message: 'Your account is pending admin approval. Please check back later.'
+          });
+        }
+        if (guide.status === 'rejected') {
+          return res.status(403).json({
+            success: false,
+            message: 'Your guide application was rejected.'
+          });
+        }
+      }
+    }
+
     // Check if user is active
     if (!user.isActive) {
       return res.status(401).json({

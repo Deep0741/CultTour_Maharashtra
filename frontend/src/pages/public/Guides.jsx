@@ -11,6 +11,11 @@ export default function Guides() {
   const [selectedGuide, setSelectedGuide] = useState(null);
   const [bookingDate, setBookingDate] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingTourType, setBookingTourType] = useState("destination");
+  const [selectedDestinationId, setSelectedDestinationId] = useState("");
+  const [selectedCuisineId, setSelectedCuisineId] = useState("");
+  const [destinations, setDestinations] = useState([]);
+  const [cuisines, setCuisines] = useState([]);
 
   // Reviews state
   const [guideReviews, setGuideReviews] = useState({});
@@ -20,23 +25,29 @@ export default function Guides() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchGuides = async () => {
+    const fetchGuidesAndData = async () => {
       try {
-        const [allRes, topRes] = await Promise.all([
+        const [allRes, topRes, destRes, cuiRes] = await Promise.all([
           api.get("/guides"),
           api.get("/guides/top"),
+          api.get("/destinations"),
+          api.get("/cuisines")
         ]);
         setGuides(allRes.data.data || allRes.data);
         setTopGuides(topRes.data.data || []);
+        setDestinations(destRes.data.data || destRes.data || []);
+        setCuisines(cuiRes.data.data || cuiRes.data || []);
       } catch (err) {
         console.error(err);
       }
     };
-    fetchGuides();
+    fetchGuidesAndData();
   }, []);
 
   const handleBooking = async () => {
     if (!bookingDate) { alert("Please select a date"); return; }
+    if (bookingTourType === "destination" && !selectedDestinationId) { alert("Please select a destination"); return; }
+    if (bookingTourType === "food" && !selectedCuisineId) { alert("Please select a food tour cuisine"); return; }
 
     setBookingLoading(true);
     const userData = JSON.parse(localStorage.getItem("user"));
@@ -45,17 +56,21 @@ export default function Guides() {
       await api.post("/bookings/create", {
         userId: userData._id,
         guideId: selectedGuide._id,
-        destinationId: localStorage.getItem("selectedDestination"),
+        destinationId: bookingTourType === "destination" ? selectedDestinationId : undefined,
+        cuisineId: bookingTourType === "food" ? selectedCuisineId : undefined,
         date: bookingDate,
         amount: selectedGuide.pricePerDay || 1000,
-        tourType: "destination",
+        tourType: bookingTourType,
       });
       alert("Booking request sent!");
       setShowModal(false);
       setBookingDate("");
+      setBookingTourType("destination");
+      setSelectedDestinationId("");
+      setSelectedCuisineId("");
     } catch (err) {
       console.log(err.response?.data);
-      alert("Booking failed");
+      alert(err.response?.data?.message || "Booking failed");
     } finally {
       setBookingLoading(false);
     }
@@ -296,6 +311,66 @@ export default function Guides() {
                   </div>
                 </div>
               </div>
+
+              {/* Tour Type Selection */}
+              <div>
+                <label className="block text-sm font-semibold text-surface-700 mb-2">Tour Type</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="tourType" 
+                      value="destination"
+                      checked={bookingTourType === "destination"}
+                      onChange={(e) => setBookingTourType(e.target.value)}
+                      className="text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm">🗺️ Destination</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="tourType" 
+                      value="food"
+                      checked={bookingTourType === "food"}
+                      onChange={(e) => setBookingTourType(e.target.value)}
+                      className="text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm">🍴 Food Tour</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Destination/Cuisine Selection */}
+              {bookingTourType === "destination" ? (
+                <div>
+                  <label className="block text-sm font-semibold text-surface-700 mb-2">Select Destination</label>
+                  <select 
+                    value={selectedDestinationId} 
+                    onChange={(e) => setSelectedDestinationId(e.target.value)}
+                    className="input-field"
+                  >
+                    <option value="">-- Choose a destination --</option>
+                    {destinations.map(d => (
+                      <option key={d._id} value={d._id}>{d.name} ({d.location?.city || d.location})</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-semibold text-surface-700 mb-2">Select Food Tour</label>
+                  <select 
+                    value={selectedCuisineId} 
+                    onChange={(e) => setSelectedCuisineId(e.target.value)}
+                    className="input-field"
+                  >
+                    <option value="">-- Choose a cuisine --</option>
+                    {cuisines.map(c => (
+                      <option key={c._id} value={c._id}>{c.name} ({c.region})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-semibold text-surface-700 mb-2">

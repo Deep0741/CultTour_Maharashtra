@@ -9,8 +9,7 @@ const Notification = require("../models/Notification");
 // =============================
 exports.getGuides = async (req, res, next) => {
   try {
-
-    const guides = await Guide.find()
+    const guides = await Guide.find({ status: "approved" })
       .populate("user", "name email phone avatar")
       .sort({ rating: -1, totalReviews: -1 });
 
