@@ -3,8 +3,6 @@ const router = express.Router();
 const Booking = require("../models/Booking");
 const Guide = require("../models/Guide");
 const Notification = require("../models/Notification");
-const sendEmail = require("../utils/mailer");
-
 
 // ✅ CREATE BOOKING (supports destination + food tours)
 router.post("/create", async (req, res) => {
@@ -82,20 +80,10 @@ router.post("/update-status", async (req, res) => {
       bookingId,
       { status },
       { new: true }
-    ).populate("tourist", "name email");
+    );
 
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
-    }
-
-    // Send email notification to the tourist if accepted
-    if (status === "accepted" && booking.tourist?.email) {
-      await sendEmail({
-        to: booking.tourist.email,
-        subject: "Tour Accepted! 🎉",
-        text: `Hello ${booking.tourist.name},\n\nGreat news! Your tour booking has been accepted by the guide. Please log in to your dashboard to complete the payment and view further details.\n\nThank you,\nCulTour Maharashtra Team`,
-        html: `<h3>Hello ${booking.tourist.name},</h3><p>Great news! Your tour booking has been <strong>accepted</strong> by the guide.</p><p>Please log in to your dashboard to complete the payment and view further details.</p><br><p>Thank you,<br>CulTour Maharashtra Team</p>`
-      });
     }
 
     res.json({ success: true, data: booking });
