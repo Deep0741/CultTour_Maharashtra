@@ -1,193 +1,91 @@
 import { useState } from "react";
 import axios from "axios";
+import { FiCheckCircle } from 'react-icons/fi';
 
 export default function GuideLicense() {
-
   const [formData, setFormData] = useState({
-    licenseNumber: "",
-    authority: "MTDC",
-    issueDate: "",
-    expiryDate: ""
+    licenseNumber: "", authority: "MTDC", issueDate: "", expiryDate: ""
   });
-
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  try {
-
-    const token = localStorage.getItem("token");
-
-await axios.post(
-  "http://localhost:5000/api/v1/guides/verify",
-  formData,
-  {
-    headers: {
-      Authorization: `Bearer ${token}`
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post("http://localhost:5000/api/v1/guides/verify", formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSubmitted(true);
+    } catch (err) {
+      console.error("Verification error:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Verification failed");
+    } finally {
+      setLoading(false);
     }
-  }
-);
-
-    console.log(res.data);
-
-    setSubmitted(true);
-
-  } catch (err) {
-
-    console.error("Verification error:", err.response?.data || err.message);
-
-    alert(err.response?.data?.message || "Verification failed");
-
-  }
-};
+  };
 
   return (
-
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-
-      <div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md">
-
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
-          Guide License Verification
-        </h2>
-
-
-        {/* Verification Submitted Message */}
-
-        {submitted && (
-
-          <div className="bg-green-100 border border-green-300 text-green-700 p-4 rounded-lg mb-6">
-
-            <p className="font-semibold">
-              Verification Submitted
-            </p>
-
-            <p className="text-sm">
-              Your license is under review by the admin.
-              You will get access to the guide dashboard once approved.
-            </p>
-
+    <div className="min-h-screen flex items-center justify-center bg-mesh px-4">
+      <div className="w-full max-w-md animate-slide-up">
+        <div className="card p-8 border border-surface-100">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center mx-auto mb-5 text-2xl">
+            🧭
           </div>
+          <h2 className="text-2xl font-bold text-center text-surface-800 mb-2">Guide License Verification</h2>
+          <p className="text-surface-500 text-center text-sm mb-6">Submit your license for admin review</p>
 
-        )}
+          {submitted && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 mb-6 text-center animate-scale-in">
+              <FiCheckCircle className="text-emerald-500 mx-auto mb-3" size={36} />
+              <p className="font-bold text-emerald-700">Verification Submitted!</p>
+              <p className="text-sm text-surface-500 mt-1">Your license is under review. You'll get dashboard access once approved.</p>
+            </div>
+          )}
 
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-surface-700 mb-2">License Number</label>
+              <input type="text" name="licenseNumber" placeholder="Enter license number" value={formData.licenseNumber} onChange={handleChange}
+                disabled={submitted} required className="input-field disabled:bg-surface-100 disabled:text-surface-400" />
+            </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-surface-700 mb-2">Issuing Authority</label>
+              <select name="authority" value={formData.authority} onChange={handleChange} disabled={submitted}
+                className="input-field disabled:bg-surface-100">
+                <option>MTDC</option>
+                <option>Government of India</option>
+              </select>
+            </div>
 
-          {/* License Number */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-semibold text-surface-700 mb-2">Issue Date</label>
+                <input type="date" name="issueDate" value={formData.issueDate} onChange={handleChange}
+                  disabled={submitted} required className="input-field disabled:bg-surface-100" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-surface-700 mb-2">Expiry Date</label>
+                <input type="date" name="expiryDate" value={formData.expiryDate} onChange={handleChange}
+                  disabled={submitted} required className="input-field disabled:bg-surface-100" />
+              </div>
+            </div>
 
-          <div>
-
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              License Number
-            </label>
-
-            <input
-              type="text"
-              name="licenseNumber"
-              placeholder="Enter license number"
-              value={formData.licenseNumber}
-              onChange={handleChange}
-              disabled={submitted}
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-none disabled:bg-gray-100"
-            />
-
-          </div>
-
-
-          {/* Issuing Authority */}
-
-          <div>
-
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Issuing Authority
-            </label>
-
-            <select
-              name="authority"
-              value={formData.authority}
-              onChange={handleChange}
-              disabled={submitted}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-none disabled:bg-gray-100"
-            >
-
-              <option>MTDC</option>
-              <option>Government of India</option>
-
-            </select>
-
-          </div>
-
-
-          {/* Issue Date */}
-
-          <div>
-
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Issue Date
-            </label>
-
-            <input
-              type="date"
-              name="issueDate"
-              value={formData.issueDate}
-              onChange={handleChange}
-              disabled={submitted}
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-none disabled:bg-gray-100"
-            />
-
-          </div>
-
-
-          {/* Expiry Date */}
-
-          <div>
-
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Expiry Date
-            </label>
-
-            <input
-              type="date"
-              name="expiryDate"
-              value={formData.expiryDate}
-              onChange={handleChange}
-              disabled={submitted}
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-none disabled:bg-gray-100"
-            />
-
-          </div>
-
-
-          {/* Submit Button */}
-
-          <button
-            type="submit"
-            disabled={submitted}
-            className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition disabled:bg-gray-400"
-          >
-
-            Verify License
-
-          </button>
-
-        </form>
-
+            <button type="submit" disabled={submitted || loading}
+              className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : "Submit for Verification"}
+            </button>
+          </form>
+        </div>
       </div>
-
     </div>
-
   );
-
 }

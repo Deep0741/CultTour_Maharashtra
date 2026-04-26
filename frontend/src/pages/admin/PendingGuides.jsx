@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
+import { FiCheckCircle, FiXCircle, FiTrash2 } from 'react-icons/fi';
 
 export default function PendingGuides() {
   const [pendingGuides, setPendingGuides] = useState([]);
@@ -7,9 +8,7 @@ export default function PendingGuides() {
   const [activeTab, setActiveTab] = useState("pending");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
+  useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -20,129 +19,92 @@ export default function PendingGuides() {
       ]);
       setPendingGuides(pendingRes.data.data || []);
       setAllGuides(allRes.data.data || []);
-    } catch (err) {
-      console.error("Failed to fetch guides:", err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   const approveGuide = async (id) => {
-    try {
-      await api.put(`/admin/guides/${id}/approve`, {});
-      fetchAll();
-    } catch (err) {
-      alert("Failed to approve guide.");
-      console.error(err);
-    }
+    try { await api.put(`/admin/guides/${id}/approve`, {}); fetchAll(); }
+    catch { alert("Failed to approve guide."); }
   };
 
   const rejectGuide = async (id) => {
-    try {
-      await api.put(`/admin/guides/${id}/reject`, {});
-      fetchAll();
-    } catch (err) {
-      alert("Failed to reject guide.");
-      console.error(err);
-    }
+    try { await api.put(`/admin/guides/${id}/reject`, {}); fetchAll(); }
+    catch { alert("Failed to reject guide."); }
   };
 
   const deleteGuide = async (id, name) => {
-    if (!window.confirm(`Delete guide "${name}"? This cannot be undone.`)) return;
-    try {
-      await api.delete(`/admin/guides/${id}`);
-      fetchAll();
-    } catch (err) {
-      alert("Failed to delete guide.");
-      console.error(err);
-    }
+    if (!window.confirm(`Delete guide "${name}"?`)) return;
+    try { await api.delete(`/admin/guides/${id}`); fetchAll(); }
+    catch { alert("Failed to delete guide."); }
   };
 
-  const statusColor = (status) => {
-    if (status === "approved") return "bg-green-100 text-green-700";
-    if (status === "rejected") return "bg-red-100 text-red-700";
-    return "bg-yellow-100 text-yellow-700";
+  const statusConfig = {
+    approved: "bg-emerald-100 text-emerald-700",
+    rejected: "bg-red-100 text-red-700",
+    pending: "bg-amber-100 text-amber-700",
   };
 
-  const GuideTable = ({ guides, showActions }) => (
+  const GuideTable = ({ guides }) => (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="bg-gray-50 border-b">
-          <tr className="text-left text-gray-600">
-            <th className="py-4 px-4">Name</th>
-            <th className="py-4 px-4">Email</th>
-            <th className="py-4 px-4">Experience</th>
-            <th className="py-4 px-4">Price/day</th>
-            <th className="py-4 px-4">Status</th>
-            <th className="py-4 px-4">License No.</th>
-            <th className="py-4 px-4">Actions</th>
+        <thead className="bg-surface-50 border-b border-surface-100">
+          <tr className="text-left text-surface-500 text-xs uppercase tracking-wider">
+            <th className="py-3.5 px-4">Guide</th>
+            <th className="py-3.5 px-4">Email</th>
+            <th className="py-3.5 px-4">Experience</th>
+            <th className="py-3.5 px-4">Price/day</th>
+            <th className="py-3.5 px-4">Status</th>
+            <th className="py-3.5 px-4">License</th>
+            <th className="py-3.5 px-4">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-surface-100">
           {guides.length === 0 ? (
-            <tr>
-              <td colSpan="7" className="text-center py-10 text-gray-500">
-                No guides found.
-              </td>
-            </tr>
+            <tr><td colSpan="7" className="text-center py-16 text-surface-500">No guides found.</td></tr>
           ) : (
-            guides.map((guide) => (
-              <tr key={guide._id} className="border-b hover:bg-gray-50">
-                <td className="py-3 px-4 font-medium">
-                  {guide.user?.name || "—"}
-                </td>
-                <td className="py-3 px-4 text-gray-500">
-                  {guide.user?.email || "—"}
-                </td>
-                <td className="py-3 px-4 text-gray-500">
-                  {guide.experience != null ? `${guide.experience} yrs` : "—"}
-                </td>
-                <td className="py-3 px-4 text-gray-500">
-                  {guide.pricePerDay ? `₹${guide.pricePerDay}` : "—"}
-                </td>
+            guides.map(guide => (
+              <tr key={guide._id} className="hover:bg-surface-50 transition-colors">
                 <td className="py-3 px-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(
-                      guide.status
-                    )}`}
-                  >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center text-xs font-bold">
+                      {guide.user?.name?.charAt(0)?.toUpperCase() || 'G'}
+                    </div>
+                    <span className="font-medium text-surface-800">{guide.user?.name || "—"}</span>
+                  </div>
+                </td>
+                <td className="py-3 px-4 text-surface-500">{guide.user?.email || "—"}</td>
+                <td className="py-3 px-4 text-surface-500">{guide.experience != null ? `${guide.experience} yrs` : "—"}</td>
+                <td className="py-3 px-4 text-surface-600 font-medium">{guide.pricePerDay ? `₹${guide.pricePerDay}` : "—"}</td>
+                <td className="py-3 px-4">
+                  <span className={`badge ${statusConfig[guide.status] || 'bg-surface-100 text-surface-600'}`}>
                     {guide.status}
                   </span>
                 </td>
-                <td className="py-3 px-4 text-gray-500">
-                  {guide.licenseNumber || "—"}
-                </td>
+                <td className="py-3 px-4 text-surface-400 text-xs">{guide.licenseNumber || "—"}</td>
                 <td className="py-3 px-4">
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex gap-1.5 flex-wrap">
                     {guide.status === "pending" && (
                       <>
-                        <button
-                          onClick={() => approveGuide(guide._id)}
-                          className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition text-xs"
-                        >
-                          Approve
+                        <button onClick={() => approveGuide(guide._id)}
+                          className="flex items-center gap-1 bg-emerald-500 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-600 transition text-xs font-medium">
+                          <FiCheckCircle size={13} /> Approve
                         </button>
-                        <button
-                          onClick={() => rejectGuide(guide._id)}
-                          className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition text-xs"
-                        >
-                          Reject
+                        <button onClick={() => rejectGuide(guide._id)}
+                          className="flex items-center gap-1 bg-amber-500 text-white px-3 py-1.5 rounded-lg hover:bg-amber-600 transition text-xs font-medium">
+                          <FiXCircle size={13} /> Reject
                         </button>
                       </>
                     )}
                     {guide.status === "rejected" && (
-                      <button
-                        onClick={() => approveGuide(guide._id)}
-                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition text-xs"
-                      >
-                        Approve
+                      <button onClick={() => approveGuide(guide._id)}
+                        className="flex items-center gap-1 bg-emerald-500 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-600 transition text-xs font-medium">
+                        <FiCheckCircle size={13} /> Approve
                       </button>
                     )}
-                    <button
-                      onClick={() => deleteGuide(guide._id, guide.user?.name)}
-                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition text-xs"
-                    >
-                      Delete
+                    <button onClick={() => deleteGuide(guide._id, guide.user?.name)}
+                      className="flex items-center gap-1 text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg transition text-xs font-medium">
+                      <FiTrash2 size={13} /> Delete
                     </button>
                   </div>
                 </td>
@@ -155,51 +117,44 @@ export default function PendingGuides() {
   );
 
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="min-h-screen bg-mesh">
       <div className="max-w-7xl mx-auto px-4 py-10">
+        <h1 className="text-3xl font-bold text-surface-800 mb-8 animate-slide-up">
+          Manage <span className="gradient-text">Guides</span>
+        </h1>
 
-        <h1 className="text-3xl font-bold mb-8">Manage Guides</h1>
-
-        {/* TABS */}
-        <div className="flex gap-3 mb-6">
-          <button
-            onClick={() => setActiveTab("pending")}
-            className={`px-5 py-2 rounded-lg font-medium transition ${
-              activeTab === "pending"
-                ? "bg-orange-500 text-white"
-                : "bg-white text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            Pending Approvals
-            {pendingGuides.length > 0 && (
-              <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
-                {pendingGuides.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("all")}
-            className={`px-5 py-2 rounded-lg font-medium transition ${
-              activeTab === "all"
-                ? "bg-orange-500 text-white"
-                : "bg-white text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            All Guides ({allGuides.length})
-          </button>
+        <div className="flex gap-2 mb-6">
+          {['pending', 'all'].map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 flex items-center gap-2 ${
+                activeTab === tab
+                  ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md'
+                  : 'bg-white text-surface-600 hover:bg-surface-50 border border-surface-200'
+              }`}
+            >
+              {tab === 'pending' ? 'Pending Approvals' : `All Guides (${allGuides.length})`}
+              {tab === 'pending' && pendingGuides.length > 0 && (
+                <span className={`text-xs rounded-full px-2 py-0.5 ${
+                  activeTab === tab ? 'bg-white/20 text-white' : 'bg-red-500 text-white'
+                }`}>
+                  {pendingGuides.length}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
 
-        {/* CONTENT */}
-        <div className="bg-white rounded-xl shadow overflow-hidden">
+        <div className="card border border-surface-100 overflow-hidden">
           {loading ? (
-            <p className="p-10 text-center text-gray-500">Loading guides...</p>
+            <div className="flex justify-center py-16"><div className="spinner" /></div>
           ) : activeTab === "pending" ? (
-            <GuideTable guides={pendingGuides} showActions />
+            <GuideTable guides={pendingGuides} />
           ) : (
-            <GuideTable guides={allGuides} showActions />
+            <GuideTable guides={allGuides} />
           )}
         </div>
-
       </div>
     </div>
   );

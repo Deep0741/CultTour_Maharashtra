@@ -1,116 +1,123 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
+import { FiMail, FiLock, FiArrowRight } from 'react-icons/fi';
 
 export default function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-const { login } = useAuth();
-const navigate = useNavigate();
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
 
-const [formData,setFormData]=useState({
-email:"",
-password:""
-});
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-const handleChange=(e)=>{
-setFormData({...formData,[e.target.name]:e.target.value});
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const result = await login(formData);
+    setLoading(false);
 
-const handleSubmit = async (e) => {
-e.preventDefault();
+    if (result.success) {
+      toast.success("Login successful");
+      const role = localStorage.getItem("userRole");
+      if (role === "admin") navigate("/admin/dashboard");
+      else if (role === "guide") navigate("/guide/dashboard");
+      else navigate("/tourist/dashboard");
+    } else {
+      toast.error(result.message || "Login failed");
+    }
+  };
 
-const result = await login(formData);
+  return (
+    <div className="min-h-screen flex">
+      {/* Left — Image */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <img
+          src="https://images.unsplash.com/photo-1651431301792-39edddc3b1e9?q=80&w=1332&auto=format&fit=crop"
+          alt="Maharashtra Heritage"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-600/90 to-accent-600/80" />
+        <div className="absolute inset-0 flex flex-col justify-end p-12">
+          <h2 className="text-4xl font-extrabold text-white mb-3">Welcome Back</h2>
+          <p className="text-white/70 text-lg max-w-md">
+            Continue exploring Maharashtra's rich cultural heritage with expert local guides.
+          </p>
+        </div>
+      </div>
 
-if (result.success) {
+      {/* Right — Form */}
+      <div className="flex-1 flex items-center justify-center bg-mesh px-6 py-12">
+        <div className="w-full max-w-md animate-slide-up">
+          <Link to="/" className="inline-flex items-center gap-1.5 mb-8">
+            <span className="text-2xl font-extrabold gradient-text">CulTour</span>
+            <span className="text-lg font-semibold text-surface-500">Maharashtra</span>
+          </Link>
 
-toast.success("Login successful");
+          <h1 className="text-3xl font-bold text-surface-800 mb-2">Sign In</h1>
+          <p className="text-surface-500 mb-8">Enter your credentials to access your account</p>
 
-const role = localStorage.getItem("userRole");
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-surface-700 mb-2">Email</label>
+              <div className="relative">
+                <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-400" size={16} />
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  onChange={handleChange}
+                  placeholder="you@example.com"
+                  className="input-field !pl-11"
+                />
+              </div>
+            </div>
 
-if (role === "admin") {
-navigate("/admin/dashboard");
-}
-else if (role === "guide") {
-navigate("/guide/dashboard");
-}
-else {
-navigate("/tourist/dashboard");
-}
+            <div>
+              <label className="block text-sm font-semibold text-surface-700 mb-2">Password</label>
+              <div className="relative">
+                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-400" size={16} />
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="input-field !pl-11"
+                />
+              </div>
+              <div className="flex justify-end mt-2">
+                <Link to="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                  Forgot Password?
+                </Link>
+              </div>
+            </div>
 
-}
-else {
-toast.error(result.message || "Login failed");
-}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full btn-primary !py-3.5 text-base flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>Sign In <FiArrowRight size={16} /></>
+              )}
+            </button>
+          </form>
 
-};
-
-return(
-
-<div className="min-h-screen flex items-center justify-center bg-gray-100">
-
-<div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8">
-
-<h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
-Login to your account
-</h2>
-
-<form onSubmit={handleSubmit} className="space-y-4">
-
-<div>
-<label className="block text-gray-600 mb-1">Email</label>
-<input
-type="email"
-name="email"
-required
-onChange={handleChange}
-className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-/>
-</div>
-
-<div>
-<label className="block text-gray-600 mb-1">Password</label>
-<input
-type="password"
-name="password"
-required
-onChange={handleChange}
-className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-/>
-<div className="flex justify-end mb-4">
-
-<a
-href="/forgot-password"
-className="text-sm text-orange-600 hover:underline"
->
-
-Forgot Password?
-
-</a>
-
-</div>
-</div>
-
-<button
-type="submit"
-className="w-full bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition"
->
-Login
-</button>
-
-</form>
-
-<p className="text-center text-gray-500 mt-4">
-Don't have an account?{" "}
-<a href="/register" className="text-orange-600 font-medium">
-Register
-</a>
-</p>
-
-</div>
-
-</div>
-
-);
-
+          <p className="text-center text-surface-500 mt-8">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-primary-600 font-semibold hover:text-primary-700">
+              Create Account
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }

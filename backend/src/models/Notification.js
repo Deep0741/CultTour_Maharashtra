@@ -15,6 +15,12 @@ const notificationSchema = new mongoose.Schema(
       enum: ["guide", "booking", "system"],
       default: "system",
     },
+    // NEW: Track tour type in notifications
+    tourType: {
+      type: String,
+      enum: ["destination", "food"],
+      default: "destination",
+    },
     isRead: {
       type: Boolean,
       default: false,

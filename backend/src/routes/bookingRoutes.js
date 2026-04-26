@@ -5,39 +5,57 @@ const Guide = require("../models/Guide");
 const Notification = require("../models/Notification");
 
 
-// ✅ CREATE BOOKING (FINAL FIXED)
+// ✅ CREATE BOOKING (supports destination + food tours)
 router.post("/create", async (req, res) => {
   try {
-    const { userId, guideId, destinationId, date, amount } = req.body;
+    const { userId, guideId, destinationId, cuisineId, date, amount, tourType } = req.body;
 
-    if (!userId || !guideId || !destinationId) {
+    if (!userId || !guideId) {
       return res.status(400).json({
-        message: "Missing required fields: userId, guideId, destinationId",
+        message: "Missing required fields: userId, guideId",
       });
     }
 
-    // ✅ FETCH GUIDE + USER NAME
-    const guideData = await Guide.findById(guideId).populate("user");
+    // For destination tours, destinationId is required
+    if (tourType !== "food" && !destinationId) {
+      return res.status(400).json({
+        message: "Missing required field: destinationId for destination tour",
+      });
+    }
 
+    // Fetch guide + user name
+    const guideData = await Guide.findById(guideId).populate("user");
     if (!guideData) {
       return res.status(404).json({ message: "Guide not found" });
     }
 
-    const booking = await Booking.create({
+    const bookingData = {
       tourist: userId,
       guide: guideId,
-      guideName: guideData.user?.name || "Guide", // ✅ FIX
-      destination: destinationId,
+      guideName: guideData.user?.name || "Guide",
       date: date ? new Date(date) : new Date(),
       amount: amount || 0,
       status: "pending",
       paymentStatus: "pending",
-    });
+      tourType: tourType || "destination",
+      tourStatus: "not-started",
+    };
 
+    // Set reference based on tour type
+    if (tourType === "food" && cuisineId) {
+      bookingData.cuisine = cuisineId;
+    } else if (destinationId) {
+      bookingData.destination = destinationId;
+    }
+
+    const booking = await Booking.create(bookingData);
+
+    const tourLabel = tourType === "food" ? "food tour" : "destination tour";
     await Notification.create({
       title: "New Booking Request",
-      message: "A tourist has booked you for a destination tour.",
+      message: `A tourist has booked you for a ${tourLabel}.`,
       type: "booking",
+      tourType: tourType || "destination",
       guideId: guideId,
       bookingId: booking._id,
     });
@@ -76,12 +94,93 @@ router.post("/update-status", async (req, res) => {
 });
 
 
+// ✅ SET MEETING POINT (Guide action after accepting)
+router.post("/set-meeting-point", async (req, res) => {
+  try {
+    const { bookingId, address, mapLink } = req.body;
+
+    if (!bookingId || !address) {
+      return res.status(400).json({ message: "bookingId and address are required." });
+    }
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (booking.status !== "accepted") {
+      return res.status(400).json({ message: "Booking must be accepted before setting meeting point." });
+    }
+
+    booking.meetingPoint = {
+      address: address,
+      mapLink: mapLink || "",
+    };
+    await booking.save();
+
+    res.json({ success: true, data: booking });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ✅ START TOUR (Guide action)
+router.post("/start-tour", async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (booking.status !== "accepted") {
+      return res.status(400).json({ message: "Booking must be accepted to start tour." });
+    }
+
+    booking.tourStatus = "in-progress";
+    await booking.save();
+
+    res.json({ success: true, message: "Tour started", data: booking });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ✅ END TOUR (Tourist action)
+router.post("/end-tour", async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (booking.tourStatus !== "in-progress") {
+      return res.status(400).json({ message: "Tour must be in progress to end it." });
+    }
+
+    booking.tourStatus = "completed";
+    booking.status = "completed";
+    await booking.save();
+
+    res.json({ success: true, message: "Tour completed", data: booking });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // ✅ GET BOOKINGS FOR GUIDE
 router.get("/guide/:guideId", async (req, res) => {
   try {
     const bookings = await Booking.find({ guide: req.params.guideId })
       .populate("tourist", "name email phone")
       .populate("destination", "name location image")
+      .populate("cuisine", "name image region")
       .sort({ createdAt: -1 });
 
     res.json(bookings);
@@ -103,6 +202,7 @@ router.get("/user/:userId", async (req, res) => {
         }
       })
       .populate("destination", "name location image")
+      .populate("cuisine", "name image region")
       .sort({ createdAt: -1 });
 
     res.json(bookings);
@@ -121,6 +221,7 @@ router.get("/notifications/guide/:guideId", async (req, res) => {
         populate: [
           { path: "tourist", select: "name email" },
           { path: "destination", select: "name" },
+          { path: "cuisine", select: "name" },
         ],
       })
       .sort({ createdAt: -1 });
@@ -138,13 +239,14 @@ router.get("/:id", async (req, res) => {
     const booking = await Booking.findById(req.params.id)
       .populate("tourist", "name email phone")
       .populate({
-  path: "guide",
-  populate: {
-    path: "user",
-    select: "name email"
-  }
-})
-      .populate("destination", "name location image");
+        path: "guide",
+        populate: {
+          path: "user",
+          select: "name email"
+        }
+      })
+      .populate("destination", "name location image")
+      .populate("cuisine", "name image region");
 
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });

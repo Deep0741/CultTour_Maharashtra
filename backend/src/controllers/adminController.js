@@ -24,6 +24,11 @@ exports.getAnalytics = async (req, res, next) => {
       },
     ]);
 
+    // Tour type breakdown
+    const destinationTours = await Booking.countDocuments({ tourType: "destination" });
+    const foodTours = await Booking.countDocuments({ tourType: "food" });
+    const activeTours = await Booking.countDocuments({ tourStatus: "in-progress" });
+
     res.json({
       success: true,
       data: {
@@ -33,6 +38,9 @@ exports.getAnalytics = async (req, res, next) => {
         bookings: totalBookings,
         destinations: totalDestinations,
         revenue: revenueData[0]?.totalRevenue || 0,
+        destinationTours,
+        foodTours,
+        activeTours,
       },
     });
   } catch (error) {
@@ -128,6 +136,7 @@ exports.getAllBookings = async (req, res, next) => {
         populate: { path: "user", select: "name email" },
       })
       .populate("destination", "name location")
+      .populate("cuisine", "name image region")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));

@@ -59,12 +59,11 @@ reviewSchema.index({ reviewType: 1 });
 reviewSchema.index({ destination: 1 });
 reviewSchema.index({ guide: 1 });
 reviewSchema.index({ cuisine: 1 });
+reviewSchema.index({ booking: 1 });
 reviewSchema.index({ rating: -1 });
 reviewSchema.index({ createdAt: -1 });
 
-// Compound index for unique reviews
-reviewSchema.index({ user: 1, destination: 1 }, { unique: true, sparse: true });
-reviewSchema.index({ user: 1, guide: 1, booking: 1 }, { unique: true, sparse: true });
-reviewSchema.index({ user: 1, cuisine: 1 }, { unique: true, sparse: true });
+// One review per user per booking (not per guide — allows reviewing same guide for different bookings)
+reviewSchema.index({ user: 1, booking: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Review', reviewSchema);

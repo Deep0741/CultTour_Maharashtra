@@ -12,16 +12,23 @@ const bookingSchema = new mongoose.Schema(
       ref: "Guide",
       required: true,
     },
-
-    // ✅ ADD THIS
     guideName: {
       type: String,
     },
-
     destination: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Destination",
-      required: true,
+    },
+    // NEW: For food tours, reference the cuisine
+    cuisine: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Cuisine",
+    },
+    // NEW: Type of tour
+    tourType: {
+      type: String,
+      enum: ["destination", "food"],
+      default: "destination",
     },
     status: {
       type: String,
@@ -39,6 +46,17 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "paid"],
       default: "pending",
+    },
+    // NEW: Meeting point set by guide
+    meetingPoint: {
+      address: { type: String, default: "" },
+      mapLink: { type: String, default: "" },
+    },
+    // NEW: Tour lifecycle status
+    tourStatus: {
+      type: String,
+      enum: ["not-started", "in-progress", "completed"],
+      default: "not-started",
     },
   },
   { timestamps: true }

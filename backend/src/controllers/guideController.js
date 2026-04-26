@@ -10,16 +10,26 @@ const Notification = require("../models/Notification");
 exports.getGuides = async (req, res, next) => {
   try {
 
-    // ✅ TEMP: remove filter so data shows
     const guides = await Guide.find()
-      .populate("user", "name email phone avatar");
+      .populate("user", "name email phone avatar")
+      .sort({ rating: -1, totalReviews: -1 });
 
-    // ✅ FORMAT FOR FRONTEND
+    // Return full guide data (including rating, totalReviews, etc.)
     const formattedGuides = guides.map(g => ({
       _id: g._id,
       name: g.user?.name || "Guide",
+      user: g.user,
       bio: g.bio || "No description available",
-      pricePerTour: g.pricePerDay || 1000
+      pricePerTour: g.pricePerDay || 1000,
+      pricePerDay: g.pricePerDay || 1000,
+      rating: g.rating || 0,
+      totalReviews: g.totalReviews || 0,
+      experience: g.experience || 0,
+      specializations: g.specializations || [],
+      languages: g.languages || [],
+      availability: g.availability,
+      totalBookings: g.totalBookings || 0,
+      status: g.status,
     }));
 
     res.status(200).json({

@@ -64,8 +64,9 @@ exports.createReview = async (req, res, next) => {
       isVerified: booking ? true : false
     });
 
-    // Update average rating
-    await updateAverageRating(reviewType, destination || guide || cuisine);
+    // Update average rating — use the correct ID for the review type
+    const targetId = reviewType === 'guide' ? guide : reviewType === 'destination' ? destination : cuisine;
+    await updateAverageRating(reviewType, targetId);
 
     res.status(201).json({
       success: true,
@@ -79,6 +80,9 @@ exports.createReview = async (req, res, next) => {
 
 // Helper function to update average rating
 const updateAverageRating = async (type, id) => {
+  if (!id) return;
+
+  const mongoose = require('mongoose');
   let Model;
   let field;
 
@@ -93,8 +97,11 @@ const updateAverageRating = async (type, id) => {
     field = 'cuisine';
   }
 
+  // Convert string id to ObjectId for aggregation
+  const objectId = new mongoose.Types.ObjectId(id);
+
   const stats = await Review.aggregate([
-    { $match: { [field]: id } },
+    { $match: { [field]: objectId, reviewType: type } },
     {
       $group: {
         _id: `$${field}`,
