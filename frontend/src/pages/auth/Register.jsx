@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
-import { FiUser, FiMail, FiLock, FiArrowRight, FiMapPin, FiCompass, FiShield } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiArrowRight, FiMapPin, FiCompass, FiShield, FiPhone } from 'react-icons/fi';
 
 export default function Register() {
   const { register } = useAuth();
@@ -10,7 +10,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: "", email: "", password: "", role: "tourist"
+    name: "", email: "", phone: "", password: "", role: "tourist"
   });
 
   const handleChange = (e) => {
@@ -113,6 +113,14 @@ export default function Register() {
               <div className="relative">
                 <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-400" size={16} />
                 <input type="email" name="email" required onChange={handleChange} placeholder="you@example.com" className="input-field !pl-11" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-surface-700 mb-2">Phone Number</label>
+              <div className="relative">
+                <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-400" size={16} />
+                <input type="tel" name="phone" required pattern="[0-9]{10}" title="Please enter a valid 10-digit phone number" onChange={handleChange} placeholder="9876543210" className="input-field !pl-11" />
               </div>
             </div>
 

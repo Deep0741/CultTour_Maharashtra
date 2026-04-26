@@ -224,6 +224,11 @@ export default function TouristDashboard() {
                         </span>
                         <span>Guide: <strong className="text-surface-700">{b.guideName || b.guide?.user?.name || "—"}</strong></span>
                         <span className="font-semibold text-surface-700">₹{b.amount}</span>
+                        {(b.status === "accepted" || b.status === "completed") && b.guide?.user?.phone && (
+                          <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">
+                            📞 {b.guide.user.phone}
+                          </span>
+                        )}
                       </div>
 
                       {/* Meeting Point */}

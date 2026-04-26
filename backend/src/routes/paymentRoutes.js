@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Razorpay = require("razorpay");
 const Booking = require("../models/Booking");
+const sendEmail = require("../utils/mailer");
 
 // 🔐 RAZORPAY INSTANCE
 const razorpay = new Razorpay({
@@ -42,7 +43,20 @@ router.post("/verify", async (req, res) => {
         paymentStatus: "paid",
       },
       { new: true }
-    );
+    ).populate({
+      path: "guide",
+      populate: { path: "user", select: "name email" }
+    });
+
+    // Send email notification to the guide if payment was successful
+    if (booking && booking.guide?.user?.email) {
+      await sendEmail({
+        to: booking.guide.user.email,
+        subject: "Payment Received! 💰",
+        text: `Hello ${booking.guide.user.name},\n\nThe tourist has successfully completed the payment for your tour booking. You are all set to provide them an amazing experience!\n\nThank you,\nCulTour Maharashtra Team`,
+        html: `<h3>Hello ${booking.guide.user.name},</h3><p>The tourist has successfully completed the payment for your tour booking.</p><p>You are all set to provide them an amazing experience!</p><br><p>Thank you,<br>CulTour Maharashtra Team</p>`
+      });
+    }
 
     res.json({ success: true, data: booking });
   } catch (err) {

@@ -187,7 +187,14 @@ export default function GuideDashboard() {
                           {b.tourist?.name?.charAt(0)?.toUpperCase() || 'T'}
                         </div>
                         <div>
-                          <p className="font-bold text-surface-800">{b.tourist?.name || "Tourist"}</p>
+                          <p className="font-bold text-surface-800 flex items-center gap-2">
+                            {b.tourist?.name || "Tourist"}
+                            {(b.status === "accepted" || b.status === "completed") && b.tourist?.phone && (
+                              <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1">
+                                📞 {b.tourist.phone}
+                              </span>
+                            )}
+                          </p>
                           <p className="text-xs text-surface-400">{b.tourist?.email || ""}</p>
                         </div>
                       </div>

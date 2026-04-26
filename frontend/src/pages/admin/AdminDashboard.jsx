@@ -145,9 +145,19 @@ export default function AdminDashboard() {
                   {notifications.slice(0, 5).map((n) => (
                     <div key={n._id} className="bg-surface-50 rounded-xl p-4 border border-surface-100">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`badge ${n.tourType === 'food' ? 'bg-emerald-100 text-emerald-700' : 'bg-accent-100 text-accent-700'} !text-[10px]`}>
-                          {n.tourType === 'food' ? '🍴 Food' : '🗺️ Destination'}
-                        </span>
+                        {n.type === 'booking' ? (
+                          <span className={`badge ${n.tourType === 'food' ? 'bg-emerald-100 text-emerald-700' : 'bg-accent-100 text-accent-700'} !text-[10px]`}>
+                            {n.tourType === 'food' ? '🍴 Food' : '🗺️ Destination'}
+                          </span>
+                        ) : n.type === 'guide' ? (
+                          <span className="badge bg-amber-100 text-amber-700 !text-[10px]">
+                            🧭 Guide
+                          </span>
+                        ) : (
+                          <span className="badge bg-blue-100 text-blue-700 !text-[10px]">
+                            ⚙️ System
+                          </span>
+                        )}
                         <p className="font-semibold text-surface-800 text-sm">{n.title}</p>
                       </div>
                       <p className="text-sm text-surface-500">{n.message}</p>
