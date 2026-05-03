@@ -1,33 +1,13 @@
-import api from './api';
+import axios from "axios";
 
-export const bookingService = {
-  create: async (bookingData) => {
-    const response = await api.post('/bookings', bookingData);
-    return response.data;
-  },
+export const createBooking = (data) =>
+  axios.post("/api/bookings/create", data);
 
-  verifyPayment: async (paymentData) => {
-    const response = await api.post('/bookings/verify-payment', paymentData);
-    return response.data;
-  },
+export const updateBookingStatus = (data) =>
+  axios.post("/api/bookings/update-status", data);
 
-  getMyBookings: async (params = {}) => {
-    const response = await api.get('/bookings/my-bookings', { params });
-    return response.data;
-  },
+export const startTour = (bookingId) =>
+  axios.post("/api/bookings/start", { bookingId });
 
-  getGuideBookings: async (params = {}) => {
-    const response = await api.get('/bookings/guide-bookings', { params });
-    return response.data;
-  },
-
-  getById: async (id) => {
-    const response = await api.get(`/bookings/${id}`);
-    return response.data;
-  },
-
-  updateStatus: async (id, statusData) => {
-    const response = await api.put(`/bookings/${id}/status`, statusData);
-    return response.data;
-  }
-};
+export const endTour = (bookingId) =>
+  axios.post("/api/bookings/end", { bookingId });

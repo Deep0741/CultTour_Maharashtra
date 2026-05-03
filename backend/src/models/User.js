@@ -40,13 +40,23 @@ const userSchema = new mongoose.Schema({
     default: true
   },
   isVerified: {
-    type: Boolean,
-    default: false
-  },
-  refreshToken: {
-    type: String,
-    select: false
+  type: Boolean,
+  default: function () {
+    return this.role !== "guide"; 
   }
+},
+  refreshToken: {
+  type: String,
+  select: false
+},
+
+resetPasswordToken: {
+  type: String
+},
+
+resetPasswordExpires: {
+  type: Date
+}
 }, {
   timestamps: true
 });

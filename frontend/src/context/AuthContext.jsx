@@ -1,59 +1,82 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { authService } from '../services/authService';
+import { createContext, useContext, useState, useEffect } from "react";
+import { loginUser, registerUser } from "../services/authService";
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
 
+  // Restore user from localStorage on page refresh
   useEffect(() => {
-    const storedUser = authService.getStoredUser();
-    if (storedUser) {
-      setUser(storedUser);
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("userRole");
+    const name = localStorage.getItem("userName");
+    const email = localStorage.getItem("userEmail");
+    const userId = localStorage.getItem("userId");
+    const isVerified = localStorage.getItem("isVerified");
+
+    if (token && role) {
+      setUser({
+        _id: userId,
+        name,
+        email,
+        role,
+        isVerified: isVerified === "true",
+      });
     }
-    setLoading(false);
   }, []);
 
- const login = async (credentials) => {
-  const user = await authService.login(credentials);
-  setUser(user);
-  return user;
-};
 
-  const register = async (userData) => {
-  const user = await authService.register(userData);
-  setUser(user);
-  return user;
-};
+  // LOGIN
+  const login = async (data) => {
+    const result = await loginUser(data);
 
-  const logout = async () => {
-    await authService.logout();
+    const token = result.token || result.data?.token;
+    const userData = result.user || result.data?.user;
+
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+
+    if (userData) {
+  localStorage.setItem("user", JSON.stringify(userData)); // ✅ ADD THIS
+
+  if (userData._id) localStorage.setItem("userId", userData._id);
+  if (userData.role) localStorage.setItem("userRole", userData.role);
+  if (userData.name) localStorage.setItem("userName", userData.name);
+  if (userData.email) localStorage.setItem("userEmail", userData.email);
+  if (userData.isVerified !== undefined)
+    localStorage.setItem("isVerified", userData.isVerified);
+}
+
+    setUser(userData);
+    return result;
+  };
+
+
+  // REGISTER
+  const register = async (data) => {
+    return await registerUser(data);
+  };
+
+
+  // LOGOUT
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("isVerified");
     setUser(null);
   };
 
-  const updateUser = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-  };
 
-  const value = {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-    updateUser,
-    isAuthenticated: !!user
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);

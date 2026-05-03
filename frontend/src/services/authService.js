@@ -1,49 +1,25 @@
-import api from './api';
+const API_URL = "http://localhost:5000/api/v1/auth";
 
-export const authService = {
-  register: async (userData) => {
-    const response = await api.post('/auth/register', userData);
-    if (response.data.success) {
-      const { token, refreshToken, user } = response.data.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-    }
-    return response.data;
-  },
+export const registerUser = async (userData) => {
+  const response = await fetch(`${API_URL}/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
+  });
 
-  login: async (credentials) => {
-    const response = await api.post('/auth/login', credentials);
-    if (response.data.success) {
-      const { token, refreshToken, user } = response.data.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-    }
-    return response.data;
-  },
+  return response.json();
+};
 
-  logout: async () => {
-    try {
-      await api.post('/auth/logout');
-    } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-    }
-  },
+export const loginUser = async (userData) => {
+  const response = await fetch(`${API_URL}/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
+  });
 
-  getCurrentUser: async () => {
-    const response = await api.get('/auth/me');
-    return response.data;
-  },
-
-  getStoredUser: () => {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
-  },
-
-  isAuthenticated: () => {
-    return !!localStorage.getItem('token');
-  }
+  return response.json();
 };

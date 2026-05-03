@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Guide = require('../models/Guide');
+const crypto = require("crypto");
 
 // Generate JWT Token
 const generateToken = (user) => {
@@ -23,21 +24,18 @@ const generateRefreshToken = (id) => {
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
+    console.log(req.body);
     const { name, email, password, role, phone } = req.body;
 
-let finalRole = "tourist";
+    const finalRole = role || 'tourist';
 
-if (role === "guide") {
-  finalRole = "guide";
-}
-
-const user = await User.create({
-  name,
-  email,
-  password,
-  role: finalRole,
-  phone
-});
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: finalRole,
+      phone
+    });
 
     // Generate tokens
     const token = generateToken(user);
@@ -77,7 +75,7 @@ exports.login = async (req, res, next) => {
         message: 'Invalid credentials'
       });
     }
-    
+
 // Check role matches selected role
 if (role && user.role !== role) {
   return res.status(401).json({
@@ -93,6 +91,25 @@ if (role && user.role !== role) {
         success: false,
         message: 'Invalid credentials'
       });
+    }
+
+    // Guide approval check
+    if (user.role === 'guide') {
+      const guide = await Guide.findOne({ user: user._id });
+      if (guide) {
+        if (guide.status === 'pending') {
+          return res.status(403).json({
+            success: false,
+            message: 'Your account is pending admin approval. Please check back later.'
+          });
+        }
+        if (guide.status === 'rejected') {
+          return res.status(403).json({
+            success: false,
+            message: 'Your guide application was rejected.'
+          });
+        }
+      }
     }
 
     // Check if user is active
@@ -206,4 +223,72 @@ exports.logout = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+//Forgot Password
+
+exports.forgotPassword = async (req, res) => {
+
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found"
+    });
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  user.resetPasswordToken = resetToken;
+
+  user.resetPasswordExpires = Date.now() + 3600000;
+
+  await user.save();
+
+  const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
+
+  console.log("Reset Link:", resetLink);
+
+  res.json({
+    success: true,
+    message: "Reset link generated",
+    resetLink
+  });
+
+};
+
+// Reset Password
+
+exports.resetPassword = async (req, res) => {
+
+  const { token } = req.params;
+  const { password } = req.body;
+
+  const user = await User.findOne({
+    resetPasswordToken: token,
+    resetPasswordExpires: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid or expired token"
+    });
+  }
+
+  user.password = password;
+
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+
+  await user.save();
+
+  res.json({
+    success: true,
+    message: "Password updated successfully"
+  });
+
 };
